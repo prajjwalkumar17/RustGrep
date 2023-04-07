@@ -1,10 +1,12 @@
 use std::env;
 use std::process;
+use minigrep::Config;
 use minigrep::run;
-use minigrep::parse_config;
 fn main() {
-    let args:Vec<String>=env::args().collect();
-    let config=parse_config(&args);
+    let config=Config::new(env::args()).unwrap_or_else(|_err|{
+        println!("Problem parsing args");
+        process::exit(1);
+    });
     println!("Searching for {}",config.query);
     println!("in file {}",config.path);
     if let Err(e)= run(config){

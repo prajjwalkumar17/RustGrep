@@ -1,22 +1,29 @@
-use std::fs;
-use std::process;
+use std::{fs, env};
 use std::error::Error;
-use std::env;
-pub struct Config<'a>{
-    pub query:&'a str,
-    pub path:&'a str,
+pub struct Config{
+    pub query:String,
+    pub path: String,
     pub ignore_case:bool,
 }
-impl<'a> Config<'a>{
-    pub fn new(args:&'a [String])->Result<Config<'a>,&'static str>{
-        if args.len()<3 {return Err("Not enough args");}
+impl Config{
+    pub fn new(mut args:env::Args)->Result<Config,&'static str>{
+        // if args.len()<3 {return Err("Not enough args");}
+        args.next();
+        let query=match args.next(){
+            Some(q)=>q,
+            None=>return Err("Didn't get a query string"),
+        };
+        let path=match args.next(){
+            Some(p)=>p,
+            None=>return Err("Didn't got a filename"),
+        };
         let ignore_case=env::var("IGNORE_CASE").is_ok();
         Ok(Config{
-            query:&args[1],
-            path:&args[2],
+            query,
+            path,
             ignore_case,
         })
-    }
+}
 }
 pub fn run(config:Config)->Result<(),Box<dyn Error>>{
     let contents =fs::read_to_string(config.path)?;
@@ -32,22 +39,16 @@ pub fn run(config:Config)->Result<(),Box<dyn Error>>{
     }
     Ok(())
 }
-pub fn parse_config<'a>(args:&'a [String])->Config<'a>{
-    Config::new(args).unwrap_or_else(|err|{
-        eprintln!("Some error in args: {err}");
-        process::exit(1);
-    })
-}
 
 pub fn search<'a>(query:&str,contents:&'a str)->Vec<&'a str>{
-    let mut results=Vec::new();
-    for line in contents.lines(){
-        if line.contains(query){
-            results.push(line.trim());
-
-        }
-    }
-    results
+    // let mut results=Vec::new();
+    // for line in contents.lines(){
+    //     if line.contains(query){
+    //         results.push(line.trim());
+    //     }
+    // }
+    // results
+    contents.lines().filter(|line|line.contains(query)).collect()
 }
 pub fn search_case_insensitive<'a>(query:&str,contents:&'a str)->Vec<&'a str>{
     let mut results=Vec::new();
